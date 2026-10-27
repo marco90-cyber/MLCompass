@@ -73,16 +73,17 @@ fun TapeView(data: DialData, modifier: Modifier = Modifier) {
         val locked = data.locked()
         if (!locked.isNaN()) {
             val d = signedDiff(locked, h)
+            val lc = lockColor(d)
             val x = cx + d * pxPerDeg
             val x0 = minOf(cx, x).coerceIn(0f, w)
             val x1 = maxOf(cx, x).coerceIn(0f, w)
             drawRect(
-                LockRed.copy(alpha = 0.4f),
+                lc.copy(alpha = 0.4f),
                 Offset(x0, baseY - 9.dp.toPx()),
                 Size(x1 - x0, 9.dp.toPx()),
             )
             if (x in 0f..w) {
-                drawLine(LockRed, Offset(x, baseY + 6.dp.toPx()), Offset(x, baseY - 44.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
+                drawLine(lc, Offset(x, baseY + 6.dp.toPx()), Offset(x, baseY - 44.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
             }
         }
 

@@ -1,7 +1,11 @@
 package com.marco.bussola
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -178,8 +182,20 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onA
             }
         }
 
-        if (!ctl.lockedBearing.isNaN()) {
-            LockBadge(ctl)
+        // Spazio sempre riservato: il quadrante non si sposta quando il blocco si attiva
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedVisibility(
+                visible = !ctl.lockedBearing.isNaN(),
+                enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.92f),
+                exit = fadeOut(tween(120)),
+            ) {
+                LockBadge(ctl)
+            }
         }
 
         // Nord geografico / magnetico
@@ -375,31 +391,59 @@ private fun FigureEight(modifier: Modifier = Modifier) {
 /** Mostra la direzione bloccata e di quanto ci si è spostati; un tocco la rimuove. */
 @Composable
 private fun LockBadge(ctl: CompassController) {
+    val c = LocalAppColors.current
     val shape = RoundedCornerShape(50)
-    val locked = ctl.lockedBearing.roundToInt()
+    // Quando si sblocca il valore è NaN mentre la scheda sfuma: tengo l'ultimo valido
+    var last by remember { mutableStateOf(0) }
+    if (!ctl.lockedBearing.isNaN()) last = ctl.lockedBearing.roundToInt()
+    val locked = last
     val dev = ((ctl.headingInt - locked + 540) % 360) - 180
-    val devText = if (dev > 0) "+$dev°" else "$dev°"
-    Box(
+    val col = lockColor(dev.toFloat())
+    val devText = when {
+        dev > 0 -> "+$dev°"
+        dev < 0 -> "−${-dev}°"
+        else -> "0°"
+    }
+    val onTrack = kotlin.math.abs(dev) <= 1
+
+    Row(
         Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp),
-        contentAlignment = Alignment.Center,
+            .clip(shape)
+            .background(c.card)
+            .border(1.5.dp, col.copy(alpha = 0.85f), shape)
+            .clickable { ctl.toggleLock() }
+            .padding(start = 20.dp, end = 10.dp, top = 7.dp, bottom = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            Modifier
-                .clip(shape)
-                .background(LockRed.copy(alpha = 0.16f))
-                .border(1.dp, LockRed, shape)
-                .clickable { ctl.toggleLock() }
-                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val c = LocalAppColors.current
-            Text("Bloccata a $locked°", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink)
-            Spacer(Modifier.width(10.dp))
-            Text("scostamento $devText", fontSize = 15.sp, color = c.inkDim)
-            Spacer(Modifier.width(8.dp))
-            CloseIcon(LockRed, 18.dp)
+        Column {
+            Text("BLOCCATA", fontSize = 10.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.SemiBold, color = c.inkDim)
+            Text("$locked°", fontSize = 22.sp, fontWeight = FontWeight.Medium, color = c.ink)
         }
+        Spacer(Modifier.width(16.dp))
+        Box(
+            Modifier
+                .width(1.dp)
+                .height(34.dp)
+                .background(c.outline.copy(alpha = 0.4f)),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(
+                if (onTrack) "IN ROTTA" else "SCOSTAMENTO",
+                fontSize = 10.sp,
+                letterSpacing = 1.2.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = col,
+            )
+            Text(devText, fontSize = 22.sp, fontWeight = FontWeight.Medium, color = col)
+        }
+        Spacer(Modifier.width(14.dp))
+        Box(
+            Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(c.inkDim.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) { CloseIcon(c.inkDim, 16.dp) }
     }
 }

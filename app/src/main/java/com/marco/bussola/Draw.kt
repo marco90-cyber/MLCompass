@@ -486,6 +486,10 @@ fun DrawScope.drawLeggibile(e: DialEnv) {
 // Blocco direzione: linea sulla direzione bloccata e fascia rossa di scostamento
 // ---------------------------------------------------------------------------
 val LockRed = Color(0xFFFF453A)
+val LockGreen = Color(0xFF30D158)
+
+/** Rosso se la direzione si scosta, verde quando si è in rotta (entro 1,5°). */
+fun lockColor(diff: Float): Color = if (kotlin.math.abs(diff) <= 1.5f) LockGreen else LockRed
 
 /** Differenza con segno tra due direzioni, nell'intervallo (-180, 180]. */
 fun signedDiff(target: Float, from: Float): Float = ((target - from) % 360f + 540f) % 360f - 180f
@@ -497,16 +501,40 @@ fun DrawScope.drawLockOverlay(e: DialEnv) {
     val ctr = center
     val r = min(size.width, size.height) / 2f
     val d = signedDiff(locked, h)
+    val col = lockColor(d)
 
+    // settore pieno tra la freccia in alto e la direzione bloccata
     val arcR = r * 0.47f
-    drawArc(
-        color = LockRed.copy(alpha = 0.9f),
-        startAngle = -90f,
-        sweepAngle = d,
-        useCenter = false,
-        topLeft = Offset(ctr.x - arcR, ctr.y - arcR),
-        size = Size(arcR * 2f, arcR * 2f),
-        style = Stroke(r * 0.05f),
+    if (kotlin.math.abs(d) > 0.3f) {
+        drawArc(
+            color = col.copy(alpha = 0.16f),
+            startAngle = -90f,
+            sweepAngle = d,
+            useCenter = true,
+            topLeft = Offset(ctr.x - arcR, ctr.y - arcR),
+            size = Size(arcR * 2f, arcR * 2f),
+        )
+        drawArc(
+            color = col,
+            startAngle = -90f,
+            sweepAngle = d,
+            useCenter = false,
+            topLeft = Offset(ctr.x - arcR, ctr.y - arcR),
+            size = Size(arcR * 2f, arcR * 2f),
+            style = Stroke(r * 0.04f, cap = StrokeCap.Round),
+        )
+    }
+
+    // linea con alone morbido
+    tick(ctr, d, r * 0.40f, r * 0.97f, col.copy(alpha = 0.20f), r * 0.07f, StrokeCap.Round)
+    tick(ctr, d, r * 0.40f, r * 0.97f, col, r * 0.022f, StrokeCap.Round)
+    drawCircle(col, r * 0.03f, pol(ctr, r * 0.40f, d))
+
+    // segnalino sul bordo, rivolto verso il centro
+    triangle(
+        pol(ctr, r * 0.875f, d),
+        pol(ctr, r * 0.985f, d - 3.6f),
+        pol(ctr, r * 0.985f, d + 3.6f),
+        col,
     )
-    tick(ctr, d, r * 0.40f, r * 0.99f, LockRed, r * 0.018f, StrokeCap.Round)
 }
