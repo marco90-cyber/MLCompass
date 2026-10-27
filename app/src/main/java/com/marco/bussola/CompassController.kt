@@ -91,6 +91,10 @@ class CompassController(
     var levelY by mutableFloatStateOf(0f)
         private set
 
+    /** Direzione bloccata con un tocco (NaN = nessun blocco). */
+    var lockedBearing by mutableFloatStateOf(Float.NaN)
+        private set
+
     var hasSensor by mutableStateOf(true)
         private set
     var locationGranted by mutableStateOf(false)
@@ -104,7 +108,14 @@ class CompassController(
         accuracy = { accuracy },
         levelX = { levelX },
         levelY = { levelY },
+        locked = { lockedBearing },
     )
+
+    /** Blocca la direzione attuale, oppure toglie il blocco se c'è già. */
+    fun toggleLock() {
+        lockedBearing = if (lockedBearing.isNaN()) degInt(heading).toFloat() else Float.NaN
+        if (prefs.haptic) vibrate(strong = true)
+    }
 
     // ---- Interni ----
 

@@ -87,6 +87,8 @@ class DialData(
     val accuracy: () -> Int,
     val levelX: () -> Float,
     val levelY: () -> Float,
+    /** Direzione bloccata in gradi; NaN se non c'è nessun blocco. */
+    val locked: () -> Float = { Float.NaN },
 )
 
 enum class Screen { MAIN, SETTINGS, PERSONALIZE }

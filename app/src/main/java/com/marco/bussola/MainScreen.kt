@@ -12,6 +12,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -161,7 +162,12 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onA
         Box(
             Modifier
                 .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { ctl.toggleLock() },
+                ),
         ) {
             Crossfade(targetState = tape, animationSpec = tween(250), label = "vista") { isTape ->
                 if (isTape) {
@@ -170,6 +176,10 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onA
                     DialPage(ctl, prefs, data)
                 }
             }
+        }
+
+        if (!ctl.lockedBearing.isNaN()) {
+            LockBadge(ctl)
         }
 
         // Nord geografico / magnetico
@@ -359,5 +369,37 @@ private fun FigureEight(modifier: Modifier = Modifier) {
             style = Stroke(16.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         )
         drawCircle(c.accent, 9.dp.toPx(), pt(phase.value * 2f * PI.toFloat()))
+    }
+}
+
+/** Mostra la direzione bloccata e di quanto ci si è spostati; un tocco la rimuove. */
+@Composable
+private fun LockBadge(ctl: CompassController) {
+    val shape = RoundedCornerShape(50)
+    val locked = ctl.lockedBearing.roundToInt()
+    val dev = ((ctl.headingInt - locked + 540) % 360) - 180
+    val devText = if (dev > 0) "+$dev°" else "$dev°"
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            Modifier
+                .clip(shape)
+                .background(LockRed.copy(alpha = 0.16f))
+                .border(1.dp, LockRed, shape)
+                .clickable { ctl.toggleLock() }
+                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val c = LocalAppColors.current
+            Text("Bloccata a $locked°", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink)
+            Spacer(Modifier.width(10.dp))
+            Text("scostamento $devText", fontSize = 15.sp, color = c.inkDim)
+            Spacer(Modifier.width(8.dp))
+            CloseIcon(LockRed, 18.dp)
+        }
     }
 }

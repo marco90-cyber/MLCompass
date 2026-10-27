@@ -481,3 +481,32 @@ fun DrawScope.drawLeggibile(e: DialEnv) {
     textCentered(e.cache.get("${degInt(h)}°", r * 0.2f, FontWeight.Medium), ctr.x, ctr.y + r * 0.01f, c.accent)
     accuracyBars(e.data.accuracy(), Offset(ctr.x, ctr.y + r * 0.21f), r * 0.09f, c.ink)
 }
+
+// ---------------------------------------------------------------------------
+// Blocco direzione: linea sulla direzione bloccata e fascia rossa di scostamento
+// ---------------------------------------------------------------------------
+val LockRed = Color(0xFFFF453A)
+
+/** Differenza con segno tra due direzioni, nell'intervallo (-180, 180]. */
+fun signedDiff(target: Float, from: Float): Float = ((target - from) % 360f + 540f) % 360f - 180f
+
+fun DrawScope.drawLockOverlay(e: DialEnv) {
+    val locked = e.data.locked()
+    if (locked.isNaN()) return
+    val h = e.data.heading()
+    val ctr = center
+    val r = min(size.width, size.height) / 2f
+    val d = signedDiff(locked, h)
+
+    val arcR = r * 0.47f
+    drawArc(
+        color = LockRed.copy(alpha = 0.9f),
+        startAngle = -90f,
+        sweepAngle = d,
+        useCenter = false,
+        topLeft = Offset(ctr.x - arcR, ctr.y - arcR),
+        size = Size(arcR * 2f, arcR * 2f),
+        style = Stroke(r * 0.05f),
+    )
+    tick(ctr, d, r * 0.40f, r * 0.99f, LockRed, r * 0.018f, StrokeCap.Round)
+}

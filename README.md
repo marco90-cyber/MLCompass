@@ -12,6 +12,9 @@ Bussola per Android in italiano (Kotlin + Jetpack Compose).
   animazione del movimento a otto per calibrare).
 - **Chip "Nord geografico"**: passa tra nord geografico (con declinazione) e nord magnetico.
 - **Campo magnetico** in µT in alto a destra.
+- **Blocco direzione** (come la Bussola di iPhone): tocca il quadrante per fissare la direzione attuale.
+  Compare una linea rossa sul punto bloccato e una fascia che mostra di quanto ti sei spostato
+  (con il valore in gradi). Un secondo tocco, o un tocco sul badge, toglie il blocco.
 
 ## Aspetto (icona tavolozza nella barra, oppure ingranaggio → Aspetto)
 

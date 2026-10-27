@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
@@ -65,6 +66,23 @@ fun TapeView(data: DialData, modifier: Modifier = Modifier) {
                     val l = cache.get(n.toString(), 16.dp.toPx())
                     drawText(l, c.ink, Offset(x - l.size.width / 2f, baseY + 10.dp.toPx()))
                 }
+            }
+        }
+
+        // direzione bloccata: fascia di scostamento e linea sul riferimento
+        val locked = data.locked()
+        if (!locked.isNaN()) {
+            val d = signedDiff(locked, h)
+            val x = cx + d * pxPerDeg
+            val x0 = minOf(cx, x).coerceIn(0f, w)
+            val x1 = maxOf(cx, x).coerceIn(0f, w)
+            drawRect(
+                LockRed.copy(alpha = 0.4f),
+                Offset(x0, baseY - 9.dp.toPx()),
+                Size(x1 - x0, 9.dp.toPx()),
+            )
+            if (x in 0f..w) {
+                drawLine(LockRed, Offset(x, baseY + 6.dp.toPx()), Offset(x, baseY - 44.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
             }
         }
 

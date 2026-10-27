@@ -56,6 +56,7 @@ fun CompassDial(style: DialStyle, data: DialData, modifier: Modifier = Modifier,
                     DialStyle.DESIGN -> drawDesign(env)
                     DialStyle.LEGGIBILE -> drawLeggibile(env)
                 }
+                drawLockOverlay(env)
             }
         }
     }
