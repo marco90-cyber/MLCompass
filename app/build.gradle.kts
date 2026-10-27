@@ -28,9 +28,9 @@ android {
         if (hasKey) {
             create("release") {
                 storeFile = file(ksFile!!)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storePassword = System.getenv("KEYSTORE_PASSWORD")?.trim()
+                keyAlias = (System.getenv("KEY_ALIAS") ?: "bussola").trim().lowercase()
+                keyPassword = System.getenv("KEY_PASSWORD")?.trim()
             }
         }
     }
