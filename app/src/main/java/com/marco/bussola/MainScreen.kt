@@ -1,11 +1,8 @@
 package com.marco.bussola
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -43,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -188,13 +186,17 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onA
                 .fillMaxWidth()
                 .height(64.dp),
             contentAlignment = Alignment.Center,
-        ) box@{
-            this@box.AnimatedVisibility(
-                visible = !ctl.lockedBearing.isNaN(),
-                enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.92f),
-                exit = fadeOut(tween(120)),
-            ) {
-                LockBadge(ctl)
+        ) {
+            val shown = !ctl.lockedBearing.isNaN()
+            val appear by animateFloatAsState(if (shown) 1f else 0f, tween(180), label = "badge")
+            if (appear > 0.01f) {
+                Box(
+                    Modifier.graphicsLayer {
+                        alpha = appear
+                        scaleX = 0.92f + 0.08f * appear
+                        scaleY = 0.92f + 0.08f * appear
+                    },
+                ) { LockBadge(ctl) }
             }
         }
 
