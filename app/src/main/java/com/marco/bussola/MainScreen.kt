@@ -188,8 +188,8 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onA
                 .fillMaxWidth()
                 .height(64.dp),
             contentAlignment = Alignment.Center,
-        ) {
-            AnimatedVisibility(
+        ) box@{
+            this@box.AnimatedVisibility(
                 visible = !ctl.lockedBearing.isNaN(),
                 enter = fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.92f),
                 exit = fadeOut(tween(120)),
