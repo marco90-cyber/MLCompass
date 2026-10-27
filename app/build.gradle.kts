@@ -20,24 +20,31 @@ android {
 
     // Chiave fissa inclusa nel progetto: tutte le build (anche da GitHub Actions)
     // hanno la stessa firma, quindi l'APK si aggiorna sopra la versione già installata.
+    // La chiave di firma non è nel repository: arriva dai Secrets di GitHub (variabili d'ambiente).
+    // Senza chiave (build locale) si usa la firma di debug di Android.
+    val ksFile = System.getenv("KEYSTORE_FILE")
+    val hasKey = !ksFile.isNullOrBlank() && file(ksFile).exists()
     signingConfigs {
-        create("release") {
-            storeFile = file("bussola.keystore")
-            storePassword = "bussola"
-            keyAlias = "bussola"
-            keyPassword = "bussola"
+        if (hasKey) {
+            create("release") {
+                storeFile = file(ksFile!!)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
         }
     }
+    val signing = if (hasKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
 
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signing
         }
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signing
         }
     }
 

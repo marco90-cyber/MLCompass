@@ -29,7 +29,22 @@ jobs:
         with:
           gradle-version: 8.10.2
 
+      - name: Prepara la chiave di firma (dai Secrets)
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::Secret KEYSTORE_B64 mancante: creo l'APK con firma di debug"
+          else
+            printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+          fi
+
       - name: Compila APK (release, firmato)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set +e
           gradle assembleRelease --no-daemon --console=plain --stacktrace > build.log 2>&1

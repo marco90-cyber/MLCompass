@@ -38,7 +38,7 @@ come **Release**. L'ultima versione è sempre qui:
 **https://github.com/marco90-cyber/MLCompass/releases/latest**
 
 Restano le ultime 5 release, le più vecchie vengono eliminate in automatico.
-Ogni APK ha un `versionCode` più alto del precedente e la stessa firma (`app/bussola.keystore`),
+Ogni APK ha un `versionCode` più alto del precedente e la stessa firma (la chiave è nei Secrets di GitHub: `KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`),
 quindi si installa sopra la versione già presente senza disinstallare. La chiave è per uso personale,
 non per il Play Store.
 
