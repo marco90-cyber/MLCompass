@@ -50,6 +50,31 @@ enum class DialStyle(
         "leggibile", "Leggibile",
         "Quadrante ad alto contrasto per una leggibilità perfetta.",
         hasMeasure = false, hasLevel = false, showsName = false,
+    ),
+    RADAR(
+        "radar", "Radar",
+        "Anelli concentrici e un settore luminoso che sfuma dietro la linea di mira.",
+        hasMeasure = false, hasLevel = false, showsName = false,
+    ),
+    MINIMALE(
+        "minimale", "Minimale",
+        "Pochi punti sottili e gradi grandi, per un quadrante leggero e pulito.",
+        hasMeasure = false, hasLevel = false, showsName = false,
+    ),
+    AEREO(
+        "aereo", "Aereo",
+        "Scala numerata come l'indicatore di rotta degli aerei, con la sagoma al centro.",
+        hasMeasure = false, hasLevel = false, showsName = false,
+    ),
+    MARINO(
+        "marino", "Marino",
+        "Rosa dei venti con stella a otto punte, come sulle carte nautiche.",
+        hasMeasure = false, hasLevel = false, showsName = false,
+    ),
+    NEON(
+        "neon", "Neon",
+        "Anelli luminosi con alone, belli soprattutto sullo sfondo scuro.",
+        hasMeasure = false, hasLevel = false, showsName = false,
     );
 
     companion object {
