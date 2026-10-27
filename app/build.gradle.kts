@@ -12,8 +12,10 @@ android {
         applicationId = "com.marco.bussola"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // In CI il numero cresce a ogni build (variabile VERSION_CODE)
+        val build = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionCode = build
+        versionName = "1.0.$build"
     }
 
     // Chiave fissa inclusa nel progetto: tutte le build (anche da GitHub Actions)

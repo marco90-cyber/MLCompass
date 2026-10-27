@@ -5,9 +5,18 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# Serve per creare le release con il token del workflow
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      # versionCode crescente: ogni APK si installa sopra il precedente
+      VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,8 +41,22 @@ jobs:
           fi
           exit $code
 
-      - name: Carica APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Bussola-apk
-          path: app/build/outputs/apk/release/*.apk
+      - name: Pubblica la release
+        run: |
+          TAG="v1.0.${{ github.run_number }}"
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          cp "$APK" "MLCompass-$TAG.apk"
+          SUBJECT=$(git log -1 --pretty=%s)
+          gh release create "$TAG" "MLCompass-$TAG.apk" \
+            --title "MLCompass $TAG" \
+            --notes "Ultima versione. Scarica **MLCompass-$TAG.apk** qui sotto e installalo sopra la precedente.
+
+          Modifica: $SUBJECT" \
+            --target "$GITHUB_SHA" \
+            --latest
+
+      - name: Tieni solo le ultime 5 release
+        run: |
+          gh release list --limit 100 --json tagName --jq '.[5:][].tagName' | while IFS= read -r t; do
+            gh release delete "$t" --cleanup-tag --yes
+          done

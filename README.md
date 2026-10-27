@@ -30,12 +30,16 @@ fluidità del movimento, schermo sempre acceso, **risposta tattile** (vibra ment
 con un impulso più deciso ai punti cardinali), mostra campo magnetico,
 permesso di posizione (serve solo per declinazione e campo previsto).
 
-## Compilare l'APK
+## Scaricare l'APK
 
-Ogni push su `main` avvia GitHub Actions (`.github/workflows/build.yml`):
-scarica l'APK da **Actions → ultima esecuzione → Artifacts → Bussola-apk**.
+Ogni push su `main` avvia GitHub Actions (`.github/workflows/build.yml`), compila l'APK e lo pubblica
+come **Release**. L'ultima versione è sempre qui:
 
-L'APK è firmato con la chiave inclusa in `app/bussola.keystore`, quindi ogni nuova versione si
-installa sopra la precedente senza disinstallare. È una chiave per uso personale, non per il Play Store.
+**https://github.com/marco90-cyber/MLCompass/releases/latest**
+
+Restano le ultime 5 release, le più vecchie vengono eliminate in automatico.
+Ogni APK ha un `versionCode` più alto del precedente e la stessa firma (`app/bussola.keystore`),
+quindi si installa sopra la versione già presente senza disinstallare. La chiave è per uso personale,
+non per il Play Store.
 
 In locale: `gradle assembleRelease` (Gradle 8.10+, JDK 17, Android SDK 35).
