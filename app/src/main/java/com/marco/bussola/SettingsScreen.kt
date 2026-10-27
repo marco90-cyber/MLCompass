@@ -89,7 +89,7 @@ fun SettingsScreen(
                 ) { PaletteIcon(c.onAccent, 24.dp) }
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Personalizzazione", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = c.ink)
+                    Text("Aspetto", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = c.ink)
                     Text(
                         "Quadrante ${prefs.style.title} · colore ${prefs.accent.name}",
                         fontSize = 14.sp,
@@ -183,7 +183,7 @@ private fun Block(title: String, subtitle: String? = null, content: @Composable 
 }
 
 @Composable
-private fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+internal fun Segmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val c = LocalAppColors.current
     val shape = RoundedCornerShape(50)
     Row(

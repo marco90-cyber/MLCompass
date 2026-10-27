@@ -75,7 +75,7 @@ fun IconButtonBox(
 }
 
 @Composable
-fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit) {
+fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit, onAppearance: () -> Unit) {
     val c = LocalAppColors.current
     val ctx = LocalContext.current
     var showSensor by remember { mutableStateOf(false) }
@@ -138,6 +138,7 @@ fun MainScreen(ctl: CompassController, prefs: Prefs, onSettings: () -> Unit) {
             IconButtonBox(onClick = { showSensor = true }) {
                 SignalIcon(accColor, accFraction)
             }
+            IconButtonBox(onClick = onAppearance) { PaletteIcon(c.ink, 26.dp) }
             IconButtonBox(onClick = onSettings) { GearIcon(c.ink) }
         }
 

@@ -61,6 +61,8 @@ private fun App(prefs: Prefs, controller: CompassController) {
         val view = LocalView.current
         val context = LocalContext.current
         var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
+        // Da dove si è aperto "Aspetto": il tasto indietro torna lì
+        var appearanceFrom by rememberSaveable { mutableStateOf(Screen.MAIN) }
 
         // Icone della barra di stato chiare o scure secondo il tema
         SideEffect {
@@ -98,21 +100,32 @@ private fun App(prefs: Prefs, controller: CompassController) {
         }
 
         BackHandler(enabled = screen != Screen.MAIN) {
-            screen = if (screen == Screen.PERSONALIZE) Screen.SETTINGS else Screen.MAIN
+            screen = if (screen == Screen.PERSONALIZE) appearanceFrom else Screen.MAIN
         }
 
         Crossfade(targetState = screen, animationSpec = tween(200), label = "schermata") { s ->
             when (s) {
-                Screen.MAIN -> MainScreen(controller, prefs) { screen = Screen.SETTINGS }
+                Screen.MAIN -> MainScreen(
+                    ctl = controller,
+                    prefs = prefs,
+                    onSettings = { screen = Screen.SETTINGS },
+                    onAppearance = {
+                        appearanceFrom = Screen.MAIN
+                        screen = Screen.PERSONALIZE
+                    },
+                )
                 Screen.SETTINGS -> SettingsScreen(
                     prefs = prefs,
                     ctl = controller,
                     onBack = { screen = Screen.MAIN },
-                    onPersonalize = { screen = Screen.PERSONALIZE },
+                    onPersonalize = {
+                        appearanceFrom = Screen.SETTINGS
+                        screen = Screen.PERSONALIZE
+                    },
                     onRequestLocation = { askLocation() },
                 )
 
-                Screen.PERSONALIZE -> PersonalizeScreen(prefs) { screen = Screen.SETTINGS }
+                Screen.PERSONALIZE -> PersonalizeScreen(prefs) { screen = appearanceFrom }
             }
         }
     }

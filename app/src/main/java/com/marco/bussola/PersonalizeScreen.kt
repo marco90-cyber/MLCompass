@@ -1,13 +1,11 @@
 package com.marco.bussola
 
-import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,10 +15,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,10 +26,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -40,19 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Dati finti che si muovono da soli, per l'anteprima "Animazione demo". */
+/** Dati finti che si muovono da soli, per l'anteprima dal vivo. */
 @Composable
 fun rememberDemoData(): DialData {
     val t = rememberInfiniteTransition(label = "demo")
@@ -80,245 +75,191 @@ fun rememberDemoData(): DialData {
     }
 }
 
+/** Dati fermi per le miniature degli stili. */
+@Composable
+private fun rememberStaticData(): DialData = remember {
+    DialData(
+        heading = { 37f },
+        headingInt = { 37 },
+        field = { 38f },
+        expected = { 45f },
+        accuracy = { 3 },
+        levelX = { 0.08f },
+        levelY = { -0.06f },
+    )
+}
+
+/**
+ * Schermata "Aspetto": anteprima grande che si muove, miniature dei quadranti, colori e sfondo.
+ * Ogni scelta si applica subito: non serve confermare.
+ */
 @Composable
 fun PersonalizeScreen(prefs: Prefs, onBack: () -> Unit) {
     val c = LocalAppColors.current
-    val ctx = LocalContext.current
-    val styles = DialStyle.entries
-    val pager = rememberPagerState(initialPage = styles.indexOf(prefs.style)) { styles.size }
     val demo = rememberDemoData()
+    val staticData = rememberStaticData()
+    val styles = DialStyle.entries
+    val tilesState = rememberLazyListState(
+        initialFirstVisibleItemIndex = (styles.indexOf(prefs.style) - 1).coerceAtLeast(0),
+    )
 
     Column(
         Modifier
             .fillMaxSize()
-            .background(c.bg),
+            .background(c.bg)
+            .statusBarsPadding(),
     ) {
-        // Intestazione colorata
         Row(
             Modifier
                 .fillMaxWidth()
-                .background(c.accent)
-                .statusBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .height(64.dp)
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButtonBox(onClick = onBack) { BackIcon(c.onAccent) }
-            Column(Modifier.padding(start = 8.dp)) {
-                Text("Personalizzazione", fontSize = 22.sp, fontWeight = FontWeight.Medium, color = c.onAccent)
-                Text("Personalizza la tua bussola", fontSize = 15.sp, color = c.onAccent.copy(alpha = 0.9f))
-            }
+            IconButtonBox(onClick = onBack) { BackIcon(c.ink) }
+            Spacer(Modifier.width(8.dp))
+            Text("Aspetto", fontSize = 28.sp, fontWeight = FontWeight.Light, color = c.ink)
         }
 
-        // Colori
-        Text(
-            "Colori",
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
-            color = c.ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 18.dp, bottom = 14.dp),
-        )
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            items(AccentOptions) { opt ->
-                ColorDot(opt, selected = opt.id == prefs.accent.id) { prefs.accentId = opt.id }
-            }
-        }
-        Spacer(Modifier.height(18.dp))
-
-        // Carosello degli stili
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier
+        Column(
+            Modifier
                 .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 44.dp),
-            pageSpacing = 10.dp,
-        ) { page ->
-            val offset = (pager.currentPage - page) + pager.currentPageOffsetFraction
-            StyleCard(
-                style = styles[page],
-                selected = styles[page] == prefs.style,
-                demo = demo,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val a = abs(offset).coerceIn(0f, 1f)
-                        alpha = 1f - 0.5f * a
-                        scaleX = 1f - 0.06f * a
-                        scaleY = 1f - 0.06f * a
-                        rotationY = offset * 26f
-                        cameraDistance = 14f * density
-                    },
-            )
-        }
-
-        // Indicatore di pagina
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(bottom = 28.dp),
         ) {
-            for (i in styles.indices) {
-                val on = i == pager.currentPage
-                Box(
-                    Modifier
-                        .padding(horizontal = 4.dp)
-                        .width(if (on) 34.dp else 24.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(if (on) c.accent else c.ink.copy(alpha = 0.25f)),
+            // Anteprima dal vivo
+            Column(
+                Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(c.card)
+                    .padding(horizontal = 12.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                CompassDial(prefs.style, demo, Modifier.fillMaxWidth().height(330.dp))
+                Spacer(Modifier.height(8.dp))
+                Text(prefs.style.title, fontSize = 22.sp, fontWeight = FontWeight.Medium, color = c.ink)
+                Text(
+                    prefs.style.description,
+                    fontSize = 14.sp,
+                    color = c.inkDim,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                 )
             }
-        }
 
-        // Pulsante di selezione
-        val current = styles[pager.currentPage]
-        val inUse = current == prefs.style
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
-                .height(60.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(c.accent)
-                .clickable {
-                    prefs.style = current
-                    Toast.makeText(ctx, "Quadrante ${current.title} applicato", Toast.LENGTH_SHORT).show()
-                    onBack()
+            // Quadranti
+            SectionTitle("Quadrante", prefs.style.title)
+            LazyRow(
+                state = tilesState,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(styles) { s ->
+                    StyleTile(s, selected = s == prefs.style, data = staticData) { prefs.style = s }
                 }
-                .padding(horizontal = 22.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PaletteIcon(c.onAccent)
-            Text(
-                if (inUse) "Quadrante in uso" else "Seleziona questo quadrante",
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = c.onAccent,
-            )
-            Spacer(Modifier.width(28.dp))
+            }
+
+            // Colori
+            SectionTitle("Colore", prefs.accent.name)
+            Column(
+                Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                for (rowItems in AccentOptions.chunked(6)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        for (opt in rowItems) {
+                            Swatch(opt, opt.id == prefs.accent.id, Modifier.weight(1f)) {
+                                prefs.accentId = opt.id
+                            }
+                        }
+                        repeat(6 - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+
+            // Sfondo
+            SectionTitle("Sfondo", null)
+            Box(Modifier.padding(horizontal = 16.dp)) {
+                Segmented(listOf("Sistema", "Chiaro", "Scuro"), prefs.theme) { prefs.theme = it }
+            }
         }
     }
 }
 
 @Composable
-private fun ColorDot(opt: AccentOption, selected: Boolean, onClick: () -> Unit) {
+private fun SectionTitle(title: String, value: String?) {
     val c = LocalAppColors.current
-    val onColor = if (opt.color.red * 0.299f + opt.color.green * 0.587f + opt.color.blue * 0.114f > 0.6f) {
-        Color(0xFF1B1B1F)
-    } else {
-        Color.White
-    }
-    Box(
+    Row(
         Modifier
-            .size(58.dp)
-            .clip(CircleShape)
+            .fillMaxWidth()
+            .padding(start = 22.dp, end = 22.dp, top = 28.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            title.uppercase(),
+            fontSize = 13.sp,
+            letterSpacing = 1.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = c.inkDim,
+            modifier = Modifier.weight(1f),
+        )
+        if (value != null) {
+            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = c.accent)
+        }
+    }
+}
+
+@Composable
+private fun StyleTile(style: DialStyle, selected: Boolean, data: DialData, onClick: () -> Unit) {
+    val c = LocalAppColors.current
+    val shape = RoundedCornerShape(22.dp)
+    Column(
+        Modifier
+            .width(104.dp)
+            .clip(shape)
+            .background(c.card)
+            .border(
+                if (selected) 2.5.dp else 1.dp,
+                if (selected) c.accent else c.outline.copy(alpha = 0.35f),
+                shape,
+            )
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CompassDial(style, data, Modifier.size(88.dp), compact = true)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            style.title,
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) c.accent else c.ink,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun Swatch(opt: AccentOption, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val c = LocalAppColors.current
+    val shape = RoundedCornerShape(16.dp)
+    val onColor = if (opt.color.luminance() > 0.5f) Color(0xFF1B1B1F) else Color.White
+    Box(
+        modifier
+            .aspectRatio(1f)
+            .clip(shape)
             .background(opt.color)
-            .border(if (selected) 3.dp else 1.5.dp, if (selected) c.ink else c.ink.copy(alpha = 0.4f), CircleShape)
+            .border(
+                if (selected) 3.dp else 1.dp,
+                if (selected) c.ink else c.ink.copy(alpha = 0.25f),
+                shape,
+            )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected) CheckIcon(onColor, 28.dp)
-    }
-}
-
-@Composable
-private fun StyleCard(style: DialStyle, selected: Boolean, demo: DialData, modifier: Modifier = Modifier) {
-    val c = LocalAppColors.current
-    val shape = RoundedCornerShape(28.dp)
-    Column(
-        modifier
-            .clip(shape)
-            .background(c.card)
-            .border(2.dp, c.accent, shape),
-    ) {
-        // Titolo
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .background(c.accent)
-                .padding(vertical = 14.dp),
-        ) {
-            Text(
-                style.title,
-                modifier = Modifier.align(Alignment.Center),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = c.onAccent,
-            )
-            if (selected) {
-                Box(
-                    Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 16.dp)
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(c.onAccent),
-                    contentAlignment = Alignment.Center,
-                ) { CheckIcon(c.accent, 22.dp) }
-            }
-        }
-        // Descrizione
-        Text(
-            style.description,
-            fontSize = 17.sp,
-            color = c.ink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 76.dp)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        )
-        // Anteprima animata
-        Box(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-        ) {
-            CompassDial(style, demo, Modifier.fillMaxSize())
-        }
-        Text(
-            "Animazione demo",
-            fontSize = 15.sp,
-            fontStyle = FontStyle.Italic,
-            color = c.ink.copy(alpha = 0.85f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-        )
-        // Funzioni dello stile
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(c.accent)
-                .padding(vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Feature("Misurazione", style.hasMeasure)
-            Feature("Livello", style.hasLevel)
-        }
-    }
-}
-
-@Composable
-private fun Feature(label: String, on: Boolean) {
-    val c = LocalAppColors.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (on) CheckIcon(c.onAccent, 22.dp) else CloseIcon(c.onAccent, 22.dp)
-        Spacer(Modifier.width(10.dp))
-        Text(label, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = c.onAccent)
+        if (selected) CheckIcon(onColor, 26.dp)
     }
 }

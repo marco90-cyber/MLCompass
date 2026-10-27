@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
  * Occupa lo spazio che gli viene dato e disegna il cerchio al massimo possibile.
  */
 @Composable
-fun CompassDial(style: DialStyle, data: DialData, modifier: Modifier = Modifier) {
+fun CompassDial(style: DialStyle, data: DialData, modifier: Modifier = Modifier, compact: Boolean = false) {
     val c = LocalAppColors.current
     val tm = rememberTextMeasurer(cacheSize = 16)
     val density = LocalDensity.current
@@ -36,7 +36,7 @@ fun CompassDial(style: DialStyle, data: DialData, modifier: Modifier = Modifier)
     val env = remember(cache, c, data) { DialEnv(cache, c, data) }
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        if (style.hasMeasure) {
+        if (style.hasMeasure && !compact) {
             ReadoutHeader(data)
         }
         BoxWithConstraints(

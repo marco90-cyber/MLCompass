@@ -13,11 +13,12 @@ Bussola per Android in italiano (Kotlin + Jetpack Compose).
 - **Chip "Nord geografico"**: passa tra nord geografico (con declinazione) e nord magnetico.
 - **Campo magnetico** in µT in alto a destra.
 
-## Personalizzazione (ingranaggio → Personalizzazione)
+## Aspetto (icona tavolozza nella barra, oppure ingranaggio → Aspetto)
 
-7 stili di quadrante con anteprima animata: **Classico, Difetto, iPhone, Navigatore, Graduato,
-Design, Leggibile**. Menu colori con 11 tinte (rosso, blu, verde, giallo, bianco, grafite, talpa,
-arancio, viola, turchese, rosa). Lo stile iPhone include la bolla di livello.
+Schermata con anteprima grande che si muove dal vivo, miniature dei **7 quadranti**
+(Classico, Difetto, iPhone, Navigatore, Graduato, Design, Leggibile), **11 colori** e sfondo
+(sistema / chiaro / scuro). Ogni scelta si applica subito, senza conferma.
+Lo stile iPhone include la bolla di livello.
 
 ## Impostazioni
 
