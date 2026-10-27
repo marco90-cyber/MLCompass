@@ -52,7 +52,7 @@ class Prefs(context: Context) {
         sp.edit().putBoolean("keepScreenOn", it).apply()
     }
 
-    var haptic by PrefState(sp.getBoolean("haptic", false)) {
+    var haptic by PrefState(sp.getBoolean("haptic", true)) {
         sp.edit().putBoolean("haptic", it).apply()
     }
 

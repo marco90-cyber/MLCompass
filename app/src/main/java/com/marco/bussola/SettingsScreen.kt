@@ -126,7 +126,7 @@ fun SettingsScreen(
             SwitchRow("Schermo sempre acceso", "Evita lo spegnimento mentre usi la bussola", prefs.keepScreenOn) {
                 prefs.keepScreenOn = it
             }
-            SwitchRow("Vibrazione verso il Nord", "Un piccolo impulso quando punti al nord", prefs.haptic) {
+            SwitchRow("Risposta tattile", "Vibra quando la direzione cambia.", prefs.haptic) {
                 prefs.haptic = it
             }
             SwitchRow("Mostra campo magnetico", "Valore in µT in alto a destra", prefs.showField) {

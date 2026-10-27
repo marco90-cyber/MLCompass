@@ -12,8 +12,10 @@ import android.hardware.SensorManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.compose.runtime.getValue
@@ -26,7 +28,7 @@ import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.min
+import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -48,6 +50,11 @@ class CompassController(
     private val rotSensor: Sensor? = sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val magSensor: Sensor? = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
     private val accSensor: Sensor? = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+    private companion object {
+        /** Gradi di rotazione tra un tick di vibrazione e il successivo. */
+        const val HAPTIC_STEP = 5f
+    }
 
     // ---- Stato osservabile ----
 
@@ -109,7 +116,8 @@ class CompassController(
     private var fieldFiltered = Float.NaN
     private var lx = 0f
     private var ly = 0f
-    private var nearNorth = false
+    private var hapticAnchor = Float.NaN
+    private var lastHapticMs = 0L
 
     // Alternativa se manca il sensore "rotation vector".
     private val grav = FloatArray(3)
@@ -231,26 +239,52 @@ class CompassController(
         maybeHaptic(h)
     }
 
+    /**
+     * Risposta tattile: un piccolo tick ogni [HAPTIC_STEP] gradi di rotazione e un impulso
+     * più deciso quando si attraversa un punto cardinale (N, E, S, O).
+     * L'ancora si sposta solo dopo un passo completo, così il sensore che "trema" fermo
+     * su un valore non fa vibrare di continuo.
+     */
     private fun maybeHaptic(h: Float) {
         if (!prefs.haptic) {
-            nearNorth = false
+            hapticAnchor = Float.NaN
             return
         }
-        val d = min(h, 360f - h)
-        if (!nearNorth && d < 1.5f) {
-            nearNorth = true
-            vibrateTick()
-        } else if (nearNorth && d > 5f) {
-            nearNorth = false
+        if (hapticAnchor.isNaN()) {
+            hapticAnchor = h
+            return
         }
+        var diff = h - hapticAnchor
+        if (diff > 180f) diff -= 360f
+        if (diff < -180f) diff += 360f
+        if (abs(diff) < HAPTIC_STEP) return
+
+        val old = hapticAnchor
+        hapticAnchor = if (abs(diff) > 3 * HAPTIC_STEP) {
+            h // rotazione veloce: riparte dalla posizione attuale
+        } else {
+            normalise(old + HAPTIC_STEP * (if (diff > 0f) 1f else -1f))
+        }
+
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastHapticMs < 40L) return
+        lastHapticMs = now
+        val crossedCardinal = floor(old / 90f).toInt() != floor(hapticAnchor / 90f).toInt()
+        vibrate(strong = crossedCardinal)
     }
 
-    @Suppress("DEPRECATION")
-    private fun vibrateTick() {
+    private fun vibrate(strong: Boolean) {
+        @Suppress("DEPRECATION")
         val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
-        if (vib.hasVibrator()) {
-            vib.vibrate(VibrationEffect.createOneShot(30, 150))
+        if (!vib.hasVibrator()) return
+        val effect = if (Build.VERSION.SDK_INT >= 29) {
+            VibrationEffect.createPredefined(
+                if (strong) VibrationEffect.EFFECT_HEAVY_CLICK else VibrationEffect.EFFECT_TICK,
+            )
+        } else {
+            if (strong) VibrationEffect.createOneShot(35, 220) else VibrationEffect.createOneShot(10, 90)
         }
+        vib.vibrate(effect)
     }
 
     // ---- Posizione (per declinazione e campo previsto) ----

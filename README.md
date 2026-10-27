@@ -22,7 +22,8 @@ arancio, viola, turchese, rosa). Lo stile iPhone include la bolla di livello.
 ## Impostazioni
 
 Nord di riferimento, tema (sistema / chiaro / scuro), vista (automatica / quadrante / scala),
-fluidità del movimento, schermo sempre acceso, vibrazione verso il Nord, mostra campo magnetico,
+fluidità del movimento, schermo sempre acceso, **risposta tattile** (vibra mentre la direzione cambia,
+con un impulso più deciso ai punti cardinali), mostra campo magnetico,
 permesso di posizione (serve solo per declinazione e campo previsto).
 
 ## Compilare l'APK
