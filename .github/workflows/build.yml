@@ -31,13 +31,20 @@ jobs:
 
       - name: Prepara la chiave di firma (dai Secrets)
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}${{ secrets.KEYSTORE_B64_2 }}
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_B64_2: ${{ secrets.KEYSTORE_B64_2 }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
             echo "::error::Secret KEYSTORE_B64 mancante: creo l'APK con firma di debug"
             exit 0
           fi
-          printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' > ks.b64
+          # La chiave è divisa in due secret: della prima parte servono i primi 1714 caratteri
+          if [ -n "$KEYSTORE_B64_2" ]; then
+            printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' | head -c 1714 > ks.b64
+            printf '%s' "$KEYSTORE_B64_2" | tr -d ' \n\r' >> ks.b64
+          else
+            printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' > ks.b64
+          fi
           n=$(wc -c < ks.b64)
           if ! base64 -d ks.b64 > "$RUNNER_TEMP/release.keystore" 2> ks.err; then
             echo "::error::KEYSTORE_B64 non valido (lunghezza $n, attesa 3428): $(head -c 200 ks.err) inizio=$(head -c 12 ks.b64) fine=$(tail -c 12 ks.b64)"
