@@ -21,7 +21,16 @@ jobs:
           gradle-version: 8.10.2
 
       - name: Compila APK (release, firmato)
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          set +e
+          gradle assembleRelease --no-daemon --console=plain --stacktrace > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            grep -E '^e: ' build.log | sed 's#file:///home/runner/work/[^/]*/[^/]*/##' | head -9 | while IFS= read -r l; do echo "::error::$l"; done
+            echo "::error::$(grep -A10 'What went wrong' build.log | head -14 | tr '\n' '|')"
+            echo "::error::$(tail -n 30 build.log | tr '\n' '|' | cut -c1-3500)"
+          fi
+          exit $code
 
       - name: Carica APK
         uses: actions/upload-artifact@v4
