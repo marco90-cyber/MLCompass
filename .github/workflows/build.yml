@@ -35,10 +35,15 @@ jobs:
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
             echo "::error::Secret KEYSTORE_B64 mancante: creo l'APK con firma di debug"
-          else
-            printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' | base64 -d > "$RUNNER_TEMP/release.keystore"
-            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+            exit 0
           fi
+          printf '%s' "$KEYSTORE_B64" | tr -d ' \n\r' > ks.b64
+          n=$(wc -c < ks.b64)
+          if ! base64 -d ks.b64 > "$RUNNER_TEMP/release.keystore" 2> ks.err; then
+            echo "::error::KEYSTORE_B64 non valido (lunghezza $n, attesa 3428): $(head -c 200 ks.err) inizio=$(head -c 12 ks.b64) fine=$(tail -c 12 ks.b64)"
+            exit 1
+          fi
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
 
       - name: Compila APK (release, firmato)
         env:
