@@ -31,7 +31,7 @@ jobs:
 
       - name: Prepara la chiave di firma (dai Secrets)
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}${{ secrets.KEYSTORE_B64_2 }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
             echo "::error::Secret KEYSTORE_B64 mancante: creo l'APK con firma di debug"
