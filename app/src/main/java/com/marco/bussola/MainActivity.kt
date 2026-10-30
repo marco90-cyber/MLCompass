@@ -83,6 +83,9 @@ private fun App(prefs: Prefs, controller: CompassController) {
             onDispose { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
         }
 
+        // Finestra di aggiornamento in app
+        AppUpdateHost()
+
         // Permesso di posizione (serve per nord geografico e campo previsto)
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),

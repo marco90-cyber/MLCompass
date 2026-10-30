@@ -116,40 +116,25 @@ class UpdateChecker(private val context: Context) {
     }
 }
 
-/** Voce delle impostazioni: versione installata, ricerca aggiornamenti e download. */
+/** Voce delle impostazioni: versione installata e aggiornamento in app (Pausa / Riprendi / Annulla). */
 @Composable
 fun UpdateBlock() {
     val c = LocalAppColors.current
     val context = LocalContext.current
-    val checker = remember { UpdateChecker(context) }
     val version = remember { installedVersion(context) }
-    val st = checker.state
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Aggiornamenti", fontSize = 18.sp, fontWeight = FontWeight.Medium, color = c.ink)
         Text("Versione installata: $version", fontSize = 14.sp, color = c.inkDim)
         Row(Modifier.fillMaxWidth()) {
-            when (st) {
-                UpdateState.Idle, is UpdateState.Failed, UpdateState.UpToDate ->
-                    TextButton(onClick = { checker.check() }) {
-                        Text("Cerca aggiornamenti", color = c.accent, fontWeight = FontWeight.Medium)
-                    }
-                UpdateState.Checking -> Text("Controllo in corso…", fontSize = 15.sp, color = c.ink)
-                is UpdateState.Available ->
-                    TextButton(onClick = { checker.open(st.url) }) {
-                        Text("Scarica la versione ${st.version}", color = c.accent, fontWeight = FontWeight.Medium)
-                    }
+            TextButton(onClick = { AppUpdate.open(context) }) {
+                Text("Cerca aggiornamenti", color = c.accent, fontWeight = FontWeight.Medium)
             }
         }
-        when (st) {
-            UpdateState.UpToDate -> Text("Hai già l'ultima versione.", fontSize = 14.sp, color = c.ink)
-            is UpdateState.Failed -> Text(st.reason, fontSize = 14.sp, color = c.inkDim)
-            is UpdateState.Available -> Text(
-                "È disponibile una versione più recente. Si scarica nel browser: aprila per installarla sopra questa.",
-                fontSize = 14.sp,
-                color = c.inkDim,
-            )
-            else -> {}
-        }
+        Text(
+            "La nuova versione si scarica e si installa direttamente dall'app.",
+            fontSize = 14.sp,
+            color = c.inkDim,
+        )
     }
 }
